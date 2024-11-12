@@ -1,0 +1,10 @@
+{
+    "Name": "RPGGO Stardew AI Mod",
+    "Author": "RPGGO",
+    "Version": "1.0.0",
+    "Description": "RPGGO Stardew AI Mod",
+    "UniqueID": "RPGGO.StardewAIMod",
+    "EntryDll": "stardewvalley-ai-mod.dll",
+    "MinimumApiVersion": "4.0.0",
+    "UpdateKeys": []
+}
