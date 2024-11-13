@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
+    <PackageReference Include="v2api-client-csharp" Version="1.0.2" />
   </ItemGroup>
 
 </Project>
