@@ -29,16 +29,23 @@ namespace stardewvalley_ai_mod
 
         private void Input_ButtonReleased(object? sender, StardewModdingAPI.Events.ButtonReleasedEventArgs e)
         {
-            world.OnButtonReleased(e);
+            if (world != null)
+            {
+                world.OnButtonReleased(e);
+            }
         }
 
         private void GameLoop_UpdateTicked(object? sender, StardewModdingAPI.Events.UpdateTickedEventArgs e)
         {
-            world.Update();
+            if (world != null)
+            {
+                world.Update();
+            }
         }
 
         private void GameLoop_SaveLoaded(object? sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
+            world = new RPGGO(Monitor, config.gameId, config.dmId, config.apiKey);
         }
 
         private void Display_MenuChanged(object? sender, StardewModdingAPI.Events.MenuChangedEventArgs e)
@@ -73,8 +80,6 @@ namespace stardewvalley_ai_mod
             Monitor.Log($"Test.GameLoop_GameLaunched");
             this.config = new ModConfig();
             ConfigMenu();
-
-            world = new RPGGO(Monitor, config.gameId, config.dmId, config.apiKey);
         }
 
         private void ConfigMenu()

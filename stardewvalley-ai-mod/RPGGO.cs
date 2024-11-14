@@ -74,6 +74,7 @@ namespace stardewvalley_ai_mod
             Game1.chatBox.chatBox.OnEnterPressed += ChatBox_OnEnterPressed;
 
             // request game data
+            Log($"[RPGGO.Init] new client with apiKey:{apiKey}");
             client = new RPGGOClient(apiKey);
             sessionId = RandomString();
             Log("[RPGGO.Init] Get game metadata");
@@ -92,6 +93,9 @@ namespace stardewvalley_ai_mod
             }
 
             Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Background, Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
 
             Log("[RPGGO.Init] Start game");
             await client.StartGameAsync(gameId, sessionId);
