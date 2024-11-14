@@ -45,7 +45,7 @@ namespace stardewvalley_ai_mod
 
         private void GameLoop_SaveLoaded(object? sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
-            world = new RPGGO(Monitor, config.gameId, config.dmId, config.apiKey);
+            world = new RPGGO(this, config);
         }
 
         private void Display_MenuChanged(object? sender, StardewModdingAPI.Events.MenuChangedEventArgs e)
@@ -78,7 +78,7 @@ namespace stardewvalley_ai_mod
         private void GameLoop_GameLaunched(object? sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
             Monitor.Log($"Test.GameLoop_GameLaunched");
-            this.config = new ModConfig();
+            this.config = this.Helper.ReadConfig<ModConfig>();
             ConfigMenu();
         }
 
@@ -115,6 +115,13 @@ namespace stardewvalley_ai_mod
                 name: () => "API Key",
                 getValue: () => this.config.apiKey,
                 setValue: value => this.config.apiKey = value
+            );
+
+            configMenu.AddTextOption(
+                mod: this.ModManifest,
+                name: () => "Session ID",
+                getValue: () => this.config.sessionId,
+                setValue: value => this.config.sessionId = value
             );
         }
 

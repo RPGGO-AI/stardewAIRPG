@@ -11,5 +11,6 @@ namespace stardewvalley_ai_mod
         public string gameId = "G2AHD9ENT";
         public string dmId = "CCT67P3C0";
         public string apiKey = "";
+        public string sessionId = "";
     }
 }

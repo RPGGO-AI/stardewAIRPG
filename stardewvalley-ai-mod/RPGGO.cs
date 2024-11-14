@@ -19,15 +19,17 @@ namespace stardewvalley_ai_mod
         private bool initing = false;
         private string targetNPCName = "";
         private string chatInput = "";
-        private IMonitor monitor;
+        private Mod mod;
 
         private Dictionary<string, NPC> npcCache = new Dictionary<string, NPC>();
 
         private RPGGOClient client;
-        private string gameId;
-        private string apiKey;
-        private string sessionId;
-        private string dmId;
+        private string gameId => config.gameId;
+        private string apiKey => config.apiKey;
+        private string sessionId => config.sessionId;
+        private string dmId => config.dmId;
+
+        private ModConfig config;
 
         private Dictionary<string, string> npcNameToId = new Dictionary<string, string>();
         private Dictionary<string, string> npcIdToName = new Dictionary<string, string>();
@@ -35,12 +37,10 @@ namespace stardewvalley_ai_mod
         private Regex affectionRegex = new Regex("(\\w+?)'s.+?(\\d+)%");
         private double lastEmoteTime;
 
-        public RPGGO(IMonitor monitor, string gameId, string dmId, string apiKey)
+        public RPGGO(Mod mod, ModConfig config)
         {
-            this.monitor = monitor;
-            this.gameId = gameId;
-            this.dmId = dmId;
-            this.apiKey = apiKey;
+            this.mod = mod;
+            this.config = config;
         }
 
         public void OnButtonReleased(ButtonReleasedEventArgs e)
@@ -76,9 +76,6 @@ namespace stardewvalley_ai_mod
             // request game data
             Log($"[RPGGO.Init] new client with apiKey:{apiKey}");
             client = new RPGGOClient(apiKey);
-            sessionId = RandomString();
-            Log("[RPGGO.Init] Get game metadata");
-            Log($"[RPGGO.Init] sessionId: {sessionId}");
             var gameMetadata = await client.GetGameMetadataAsync(gameId);
 
             Log($"[RPGGO.Init] Game Name: {gameMetadata.Data.Name}");
@@ -92,13 +89,26 @@ namespace stardewvalley_ai_mod
                 npcIdToName[chr.Id] = chr.Name;
             }
 
+            Log("[RPGGO.Init] Get game metadata");
+            Log($"[RPGGO.Init] sessionId: {sessionId}");
+
             Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Background, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
 
-            Log("[RPGGO.Init] Start game");
-            await client.StartGameAsync(gameId, sessionId);
+            if (string.IsNullOrWhiteSpace(sessionId))
+            {
+                config.sessionId = RandomString();
+                mod.Helper.WriteConfig<ModConfig>(config);
+                Log($"[RPGGO.Init] Start game sessionId: {sessionId}");
+                await client.StartGameAsync(gameId, sessionId);
+            }
+            else
+            {
+                Log($"[RPGGO.Init] Resume game sessionId: {sessionId}");
+                await client.ResumeSessionAsync(gameId, sessionId);
+            }
 
             inited = true;
             initing = false;
@@ -386,12 +396,12 @@ namespace stardewvalley_ai_mod
 
         private void Log(string msg)
         {
-            monitor.Log(msg);
+            mod.Monitor.Log(msg);
         }
 
         private void LogError(string msg)
         {
-            monitor.Log(msg, LogLevel.Error);
+            mod.Monitor.Log(msg, LogLevel.Error);
         }
     }
 }
