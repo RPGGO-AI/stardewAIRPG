@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,6 +34,11 @@ namespace stardewvalley_ai_mod
         private Dictionary<string, string> npcNameToId = new Dictionary<string, string>();
         private Dictionary<string, string> npcIdToName = new Dictionary<string, string>();
 
+        private Dictionary<string, string> chineseNameToEnglishName = new Dictionary<string, string>
+        {
+            { "塞巴斯蒂安", "sebastian" }, { "潘妮", "penny" }, { "阿比盖尔", "abigail" }, { "山姆", "sam" }
+        };
+
         private Regex affectionRegex = new Regex("(\\w+?)'s.+?(\\d+)%");
         private double lastEmoteTime;
 
@@ -51,7 +56,7 @@ namespace stardewvalley_ai_mod
                 Log($"Release R npcName:{lowerNPCName} npcCache.count:{npcCache.Count}");
                 if (npcCache.TryGetValue(lowerNPCName, out var npc))
                 {
-                    Log($"name:{npc.Name} speed:{npc.speed} addedSpeed:{npc.addedSpeed}");
+                    Log($"name:{GetNPCName(npc)} speed:{npc.speed} addedSpeed:{npc.addedSpeed}");
                     npc.addedSpeed = -npc.speed;
                     Game1.chatBox.activate();
                 } else
@@ -354,10 +359,10 @@ namespace stardewvalley_ai_mod
             {
                 foreach (var npc in loc.characters)
                 {
-                    npcCache[npc.Name.ToLower()] = npc;
+                    npcCache[GetNPCName(npc).ToLower()] = npc;
                     // npc.startGlowing(Microsoft.Xna.Framework.Color.Cyan, true, 0.01f);
 
-                    if (npcNameToId.ContainsKey(npc.Name.ToLower()))
+                    if (npcNameToId.ContainsKey(GetNPCName(npc).ToLower()))
                     {
                         npc.doEmote(2);
                     }
@@ -376,22 +381,27 @@ namespace stardewvalley_ai_mod
                 if (distance < minDistance)
                 {
                     minDistance = distance;
-                    targetNPCName = npc.Name;
+                    targetNPCName = GetNPCName(npc);
                 }
             }
 
             // Glow
             foreach (var (_, npc) in npcCache)
             {
-                if (npc.Name != targetNPCName && npc.isGlowing)
+                if (GetNPCName(npc) != targetNPCName && npc.isGlowing)
                 {
                     npc.stopGlowing();
                 }
-                else if (npcNameToId.TryGetValue(npc.Name, out var _) && npc.Name == targetNPCName && !npc.isGlowing)
+                else if (npcNameToId.TryGetValue(GetNPCName(npc), out var _) && GetNPCName(npc) == targetNPCName && !npc.isGlowing)
                 {
                     npc.startGlowing(Microsoft.Xna.Framework.Color.Purple, border: false, 0.01f);
                 }
             }
+        }
+
+        private string GetNPCName(NPC npc)
+        {
+            return npc.Name;
         }
 
         private void Log(string msg)
