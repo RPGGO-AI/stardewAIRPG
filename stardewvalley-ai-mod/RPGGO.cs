@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -13,6 +15,12 @@ using static StardewValley.Minigames.TargetGame;
 
 namespace stardewvalley_ai_mod
 {
+    public class GameStatus
+    {
+        [JsonProperty("session_id")]
+        public string SessionId { get; set; }
+    }
+
     public class RPGGO
     {
         private bool inited = false;
@@ -20,6 +28,7 @@ namespace stardewvalley_ai_mod
         private string targetNPCName = "";
         private string chatInput = "";
         private IMonitor monitor;
+        private string defaultStatusName = "gamestatus.json";
 
         private Dictionary<string, NPC> npcCache = new Dictionary<string, NPC>();
 
@@ -61,6 +70,57 @@ namespace stardewvalley_ai_mod
             }
         }
 
+        private string getStatusFilePath()
+        {
+            string assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            return Path.Combine(assemblyFolder, defaultStatusName);
+        }
+        private async Task<string> createNewSession()
+        {
+            // No exsiting session, create a new one
+            sessionId = RandomString();
+            await client.StartGameAsync(gameId, sessionId);
+
+            GameStatus _data = new GameStatus
+            {
+                SessionId = sessionId,
+            };
+
+
+            string json = JsonConvert.SerializeObject(_data);
+
+            //write string to file
+            string status_path = getStatusFilePath();
+            System.IO.File.WriteAllText(status_path, json);
+            Console.WriteLine($"No previous session exists. Create a new one: {sessionId}");
+            return sessionId;
+        }
+
+        private async Task<string> getSessionIdOrCreateNewSessionIfNoExist()
+        {
+            string status_path = getStatusFilePath();
+
+            if (!File.Exists(status_path))
+            { 
+                return await createNewSession();
+            }
+
+            // read existing one
+            string jsonString = File.ReadAllText(status_path);
+            GameStatus ob = JsonConvert.DeserializeObject<GameStatus>(jsonString)!;
+
+            if (ob == null || String.IsNullOrEmpty(ob.SessionId))
+            {
+                return await createNewSession();
+            }
+
+            
+            Console.WriteLine($"Read game status file @: {status_path}");
+            return ob.SessionId;
+
+        }
+
         public async Task Init()
         {
             if (!Context.IsWorldReady) return;
@@ -76,7 +136,7 @@ namespace stardewvalley_ai_mod
             // request game data
             Log($"[RPGGO.Init] new client with apiKey:{apiKey}");
             client = new RPGGOClient(apiKey);
-            sessionId = RandomString();
+            sessionId = await getSessionIdOrCreateNewSessionIfNoExist();
             Log("[RPGGO.Init] Get game metadata");
             Log($"[RPGGO.Init] sessionId: {sessionId}");
             var gameMetadata = await client.GetGameMetadataAsync(gameId);
@@ -97,8 +157,8 @@ namespace stardewvalley_ai_mod
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
 
-            Log("[RPGGO.Init] Start game");
-            await client.StartGameAsync(gameId, sessionId);
+            Log($"[RPGGO.Init] Start game with session {sessionId}");
+            await client.ResumeSessionAsync(gameId, sessionId);
 
             inited = true;
             initing = false;
