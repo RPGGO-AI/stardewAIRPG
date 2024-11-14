@@ -1,18 +1,22 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace stardewvalley_ai_mod
 {
     public class ModConfig
     {
-        public string gameId = "G2AHD9ENT";
         public string dmId = "CCT67P3C0";
 
+        [JsonProperty("game_id")]
+        public string GameId { get; set; }
+
+        [JsonProperty("api_key")]
         public string ApiKey { get; set; }
 
         private static ModConfig? _onlyOne = null;
@@ -34,8 +38,8 @@ namespace stardewvalley_ai_mod
 
             // read JSON directly from a file
             string jsonString = File.ReadAllText(config_path);
-            ModConfig ob = JsonSerializer.Deserialize<ModConfig>(jsonString)!;
-            
+            ModConfig ob = JsonConvert.DeserializeObject<ModConfig>(jsonString)!;
+
             string last6ApiKey = ob.ApiKey.Substring(ob.ApiKey.Length - 6);
             Console.WriteLine($"Read the config file successfully. last 6 digits of API Key is {last6ApiKey}");
 
