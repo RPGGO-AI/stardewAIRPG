@@ -12,15 +12,18 @@ namespace v2api_client_csharp
     {
         public int Code { get; set; }
         public string Msg { get; set; }
-        public GameData Data { get; set; }
     }
 
     public class GameMetadataResponse: RPGGOResponse
     {
+        [JsonProperty("data")]
+        public FullGameData Data { get; set; }
     }
 
-    public class StartGameResponse: RPGGOResponse
+    public class GameOngoingResponse: RPGGOResponse
     {
+        [JsonProperty("data")]
+        public OngoingGameData Data { get; set; }
     }
 
     public class GameData
@@ -43,15 +46,25 @@ namespace v2api_client_csharp
         [JsonProperty("genre")]
         public string Genre { get; set; }
 
-        [JsonProperty("chapters")]
-        public List<Chapter> Chapters { get; set; }
-
         [JsonProperty("created_at")]
         public DateTime CreatedAt { get; set; }
 
         [JsonProperty("updated_at")]
         public DateTime UpdatedAt { get; set; }
     }
+
+    public class OngoingGameData : GameData
+    {
+        [JsonProperty("chapter")]
+        public Chapter Chapter { get; set; }
+    }
+
+    public class FullGameData : GameData
+    {
+        [JsonProperty("chapters")]
+        public List<Chapter> Chapters { get; set; }
+    }
+
 
     public class Chapter
     {
@@ -206,6 +219,8 @@ namespace v2api_client_csharp
     public class SSEData
     {
         public Result Result { get; set; }
+
+        [JsonProperty("game_status")]
         public GameStatus GameStatus { get; set; }
     }
 
