@@ -53,6 +53,7 @@ namespace stardewvalley_ai_mod
 
         private Regex affectionRegex = new Regex("(\\w+?)'s.+?(\\d+)%");
         private double lastEmoteTime;
+        private bool lastFrameChatBoxActive;
 
         public RPGGO(Mod mod, ModConfig config)
         {
@@ -196,7 +197,17 @@ namespace stardewvalley_ai_mod
             await client.ChatSseAsync(characterId, gameId, msg, msgId, sessionId, MessageCallback, (_) =>
             {
 
-            });
+            }, OnChapterSwitch, OnGameEnding);
+        }
+
+        private void OnChapterSwitch(string msg, GameOngoingResponse resp)
+        {
+            Game1.chatBox.addMessage(msg, Microsoft.Xna.Framework.Color.Cyan);
+        }
+
+        private void OnGameEnding(string msg)
+        {
+            Game1.chatBox.addMessage(msg, Microsoft.Xna.Framework.Color.Cyan);
         }
 
         private string GetChatBoxInput()
@@ -397,9 +408,27 @@ namespace stardewvalley_ai_mod
         {
             Init();
 
+            UpdateChatBoxClose();
             UpdateNPCs();
             SelectTarget();
             UpdateChatInput();
+        }
+
+        private void UpdateChatBoxClose()
+        {
+            if (Game1.chatBox != null)
+            {
+                if (!Game1.chatBox.isActive() && lastFrameChatBoxActive)
+                {
+                    Log($"ChatBox closed. Release npc {targetNPCName.ToLower()}");
+                    // 释放NPC移动
+                    if (npcCache.TryGetValue(targetNPCName.ToLower(), out var npc))
+                    {
+                        npc.addedSpeed = 0;
+                    }
+                }
+                lastFrameChatBoxActive = Game1.chatBox.isActive();
+            }
         }
 
         private void UpdateChatInput()

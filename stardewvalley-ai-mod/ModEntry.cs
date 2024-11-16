@@ -52,27 +52,6 @@ namespace stardewvalley_ai_mod
         {
             Monitor.Log($"Test.Display_MenuChanged NewMenu: {e.NewMenu}");
 
-            if (!(e.NewMenu is DialogueBox))
-            {
-                return;
-            }
-            NPC npc = Game1.currentSpeaker;
-
-            if (npc == null) {
-                return;    
-            }
-
-            string npcName = npc.Name;
-            Monitor.Log($"Test.Display_MenuChanged DialogueBox npcName: {npcName}, eventUp: {Game1.eventUp}");
-
-            Dialogue dialogue = npc.CurrentDialogue.Peek();
-            Monitor.Log($"Test.Display_MenuChanged dialogue: {dialogue}");
-            if (dialogue != null)
-            {
-                Monitor.Log($"Test.Display_MenuChanged dialogue: {dialogue.dialogues.Count}, index: {dialogue.currentDialogueIndex}");
-                Monitor.Log("Test.Display_MenuChanged add line");
-                dialogue.dialogues.Add(new DialogueLine("Test Dialog"));
-            }
         }
 
         private void GameLoop_GameLaunched(object? sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
