@@ -12,6 +12,8 @@ namespace v2api_client_csharp
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiEndpoint = "https://api.rpggo.ai";
+        private GameOngoingResponse? _previousGameMeta = null;
+        private GameOngoingResponse? _currentGameMeta = null;
 
         public RPGGOClient(string apiKey)
         {
@@ -67,6 +69,8 @@ namespace v2api_client_csharp
                 Console.WriteLine($"Fail to start game: {startGameResponse.Msg}");
             }
 
+            _currentGameMeta = startGameResponse;
+
             return startGameResponse;
         }
 
@@ -91,6 +95,8 @@ namespace v2api_client_csharp
             {
                 Console.WriteLine($"Fail to result game: {resumeSessionResponse.Msg}");
             }
+
+            _currentGameMeta = resumeSessionResponse;
             return resumeSessionResponse;
         }
 
@@ -116,6 +122,9 @@ namespace v2api_client_csharp
                 Console.WriteLine($"Fail to result game: {changeChapterResponse.Msg}");
             }
 
+            _previousGameMeta = _currentGameMeta;
+            _currentGameMeta = changeChapterResponse;
+
             return changeChapterResponse;
         }
 
@@ -129,7 +138,8 @@ namespace v2api_client_csharp
             string sessionId,
             Action<string, string> onChatMessageReceived,
             Action<string> onImageMessageReceived = null,
-            Action<string, GameOngoingResponse> onChapterSwitchMessageReceived = null,
+            Action<string, GameOngoingResponse?> onBeforeChapterSwitch = null,
+            Action<string, GameOngoingResponse?> onAfterChapterSwitch = null,
             Action<string> onGameEndingMessageReceived = null)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -199,11 +209,12 @@ namespace v2api_client_csharp
                                 {
                                     if (sseMsg.Data.Result.CharacterType == "goal_check_dm" && sseMsg.Data.GameStatus.Action == 2)
                                     {
+                                        onBeforeChapterSwitch?.Invoke(sseMsg.Data.GameStatus.ActionMessage, _currentGameMeta);
                                         var next_chapter_id = sseMsg.Data.GameStatus.ChapterId;
                                         var new_meta_response = await SwitchChapterAsync(gameId, next_chapter_id, sessionId);
                                         Console.WriteLine($"switch to new chapter {next_chapter_id}");
                                         // switch to new chapter and pass new metadata for application processing
-                                        onChapterSwitchMessageReceived?.Invoke(sseMsg.Data.GameStatus.ActionMessage, new_meta_response);
+                                        onAfterChapterSwitch?.Invoke(sseMsg.Data.GameStatus.ActionMessage, new_meta_response);
                                         
                                     }
                                     else if (sseMsg.Data.Result.CharacterType == "goal_check_dm" && sseMsg.Data.GameStatus.Action == 3)
