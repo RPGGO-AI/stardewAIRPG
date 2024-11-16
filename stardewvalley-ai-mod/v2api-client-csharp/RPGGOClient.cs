@@ -37,6 +37,11 @@ namespace v2api_client_csharp
             var responseContent = await response.Content.ReadAsStringAsync();
             var gameMetadataResponse = JsonConvert.DeserializeObject<GameMetadataResponse>(responseContent)!;
 
+            if (gameMetadataResponse.Code != 200 && gameMetadataResponse.Code != 0)
+            {
+                Console.WriteLine($"Fail to get game meta: {gameMetadataResponse.Msg}");
+            }
+
             return gameMetadataResponse;
         }
 
@@ -56,6 +61,11 @@ namespace v2api_client_csharp
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var startGameResponse = JsonConvert.DeserializeObject<GameOngoingResponse>(responseContent)!;
+
+            if (startGameResponse.Code != 200 && startGameResponse.Code != 0)
+            {
+                Console.WriteLine($"Fail to start game: {startGameResponse.Msg}");
+            }
 
             return startGameResponse;
         }
@@ -77,6 +87,10 @@ namespace v2api_client_csharp
             var responseContent = await response.Content.ReadAsStringAsync();
             var resumeSessionResponse = JsonConvert.DeserializeObject<GameOngoingResponse>(responseContent)!;
 
+            if (resumeSessionResponse.Code != 200 && resumeSessionResponse.Code != 0)
+            {
+                Console.WriteLine($"Fail to result game: {resumeSessionResponse.Msg}");
+            }
             return resumeSessionResponse;
         }
 
@@ -96,6 +110,11 @@ namespace v2api_client_csharp
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var changeChapterResponse = JsonConvert.DeserializeObject<GameOngoingResponse>(responseContent)!;
+
+            if (changeChapterResponse.Code != 200 && changeChapterResponse.Code != 0)
+            {
+                Console.WriteLine($"Fail to result game: {changeChapterResponse.Msg}");
+            }
 
             return changeChapterResponse;
         }
@@ -152,6 +171,11 @@ namespace v2api_client_csharp
                                 throw new Exception("json deserialize issue:" + completeMessage);
                             }
 
+                            if (sseMsg.Ret != 200 && sseMsg.Ret != 0)
+                            {
+                                Console.WriteLine($"Fail to chat with {characterId}: {sseMsg.Message}");
+                            }
+
                             if (sseMsg.Data.Result != null)
                             {
 
@@ -177,6 +201,7 @@ namespace v2api_client_csharp
                                     {
                                         var next_chapter_id = sseMsg.Data.GameStatus.ChapterId;
                                         var new_meta_response = await SwitchChapterAsync(gameId, next_chapter_id, sessionId);
+                                        Console.WriteLine($"switch to new chapter {next_chapter_id}");
                                         // switch to new chapter and pass new metadata for application processing
                                         onChapterSwitchMessageReceived?.Invoke(sseMsg.Data.GameStatus.ActionMessage, new_meta_response);
                                         
@@ -203,7 +228,7 @@ namespace v2api_client_csharp
 
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
-            Console.WriteLine($"chatsse executed {elapsedMs} ms");
+            Console.WriteLine($"ChatSseAsync executed in {elapsedMs} ms.");
         }
 
     }
