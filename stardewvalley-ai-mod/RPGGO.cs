@@ -20,17 +20,18 @@ namespace stardewvalley_ai_mod
         private bool initing = false;
         private string targetNPCName = "";
         private string chatInput = "";
-        private Mod mod;
+        private ModEntry mod;
 
         private Dictionary<string, NPC> npcCache = new Dictionary<string, NPC>();
 
         private RPGGOClient client;
         private string gameId => config.gameId;
         private string apiKey => config.apiKey;
-        private string sessionId => config.sessionId;
+        private string sessionId => session.sessionId;
         private string dmId => config.dmId;
 
         private ModConfig config;
+        private SessionConfig session;
 
         private Dictionary<string, string> npcNameToId = new Dictionary<string, string>();
         private Dictionary<string, string> npcIdToName = new Dictionary<string, string>();
@@ -44,10 +45,11 @@ namespace stardewvalley_ai_mod
         private double lastEmoteTime;
         private bool lastFrameChatBoxActive;
 
-        public RPGGO(Mod mod, ModConfig config)
+        public RPGGO(ModEntry mod, ModConfig config, SessionConfig session)
         {
             this.mod = mod;
             this.config = config;
+            this.session = session;
         }
 
         public void OnButtonReleased(ButtonReleasedEventArgs e)
@@ -108,8 +110,8 @@ namespace stardewvalley_ai_mod
 
             if (string.IsNullOrWhiteSpace(sessionId))
             {
-                config.sessionId = RandomString();
-                mod.Helper.WriteConfig<ModConfig>(config);
+                session.sessionId = RandomString();
+                mod.SaveSession(session);
                 Log($"[RPGGO.Init] Start game sessionId: {sessionId}");
                 await client.StartGameAsync(gameId, sessionId);
             }
