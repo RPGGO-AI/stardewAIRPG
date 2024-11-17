@@ -12,4 +12,11 @@
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Figgle">
+      <HintPath>lib\Figgle.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+
 </Project>

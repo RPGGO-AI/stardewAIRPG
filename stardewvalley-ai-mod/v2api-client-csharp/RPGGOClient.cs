@@ -11,17 +11,20 @@ namespace v2api_client_csharp
     public class RPGGOClient
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiEndpoint = "https://api.rpggo.ai";
+        private string _apiEndpoint = "https://api.rpggo.ai";
         private GameOngoingResponse? _previousGameMeta = null;
         private GameOngoingResponse? _currentGameMeta = null;
 
         public RPGGOClient(string apiKey)
         {
             _httpClient = new HttpClient();
-            //_httpClient.DefaultRequestHeaders.Add("accept", "application/json");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Add("Authorization", apiKey);
-            //_httpClient.DefaultRequestHeaders..Add("Content-Type", "application/json");
+        }
+
+        public RPGGOClient(string apiKey, string apiEndpoint) : this(apiKey)
+        {
+            _apiEndpoint = apiEndpoint;
         }
 
         public async Task<GameMetadataResponse> GetGameMetadataAsync(string gameId)
