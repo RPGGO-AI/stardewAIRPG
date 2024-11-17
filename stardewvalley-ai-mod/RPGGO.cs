@@ -152,7 +152,6 @@ namespace stardewvalley_ai_mod
         {
             Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(FiggleFonts.Slant.Render("Congratulations"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage($"Current chapter <{currentRsp?.Data.Chapter.Name}> passed.", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(action_msg, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
         }

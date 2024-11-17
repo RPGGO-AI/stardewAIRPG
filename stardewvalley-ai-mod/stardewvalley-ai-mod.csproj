@@ -5,7 +5,6 @@
     <RootNamespace>stardewvalley_ai_mod</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ProduceReferenceAssembly>True</ProduceReferenceAssembly>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,10 +15,6 @@
   <ItemGroup>
     <Reference Include="Figgle">
       <HintPath>lib\Figgle.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="v2api-client-csharp">
-      <HintPath>lib\v2api-client-csharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
