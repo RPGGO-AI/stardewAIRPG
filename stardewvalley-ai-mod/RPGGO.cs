@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Figgle;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -99,7 +98,6 @@ namespace stardewvalley_ai_mod
             Log("[RPGGO.Init] Get game metadata");
             Log($"[RPGGO.Init] sessionId: {sessionId}");
 
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO . AI"), Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Name, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Background, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
@@ -151,7 +149,7 @@ namespace stardewvalley_ai_mod
         private void BeforeChapterSwitch(string action_msg, GameOngoingResponse currentRsp)
         {
             Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("Congratulations"), Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage("Congratulations", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage($"Current chapter <{currentRsp?.Data.Chapter.Name}> passed.", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(action_msg, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
@@ -159,15 +157,15 @@ namespace stardewvalley_ai_mod
 
         private void AfterChapterSwitch(string msg, GameOngoingResponse currentRsp)
         {
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("New chapter"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage($"Chapter <{currentRsp?.Data.Chapter.Name}> starts.", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage($"New chapter <{currentRsp?.Data.Chapter.Name}> starts.", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(currentRsp?.Data.Chapter.Background, Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
         }
 
         private void OnGameEnding(string msg)
         {
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("Game Over"), Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage("Game Over", Microsoft.Xna.Framework.Color.Cyan);
             Game1.chatBox.addMessage(msg, Microsoft.Xna.Framework.Color.Cyan);
         }
 
