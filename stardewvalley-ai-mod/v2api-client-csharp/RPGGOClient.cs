@@ -177,6 +177,12 @@ namespace v2api_client_csharp
                     {
                         if (!string.IsNullOrWhiteSpace(completeMessage))
                         {
+                            if (completeMessage.Contains("The game session has ended"))
+                            {
+                                onGameEndingMessageReceived?.Invoke("The game session has ended. You need to restart the game.");
+                                completeMessage = string.Empty;
+                            }   
+
                             // Trigger callback when the message is complete
                             var sseMsg = JsonConvert.DeserializeObject<SSEResponse>(completeMessage);
                             if (sseMsg == null)
