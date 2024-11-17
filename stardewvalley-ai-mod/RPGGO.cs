@@ -68,6 +68,52 @@ namespace stardewvalley_ai_mod
             }
         }
 
+        private Microsoft.Xna.Framework.Color getLogoColor()
+        {
+            return Microsoft.Xna.Framework.Color.Gold;
+        }
+
+        private Microsoft.Xna.Framework.Color getTitleColor()
+        {
+            return Microsoft.Xna.Framework.Color.Salmon;
+        }
+
+        private Microsoft.Xna.Framework.Color getTextColor()
+        {
+            return Microsoft.Xna.Framework.Color.MistyRose;
+        }
+
+        private Microsoft.Xna.Framework.Color getNPCColor()
+        {
+            return Microsoft.Xna.Framework.Color.LightGreen;
+        }
+
+        private Microsoft.Xna.Framework.Color getNPCChatColor()
+        {
+            return Microsoft.Xna.Framework.Color.Khaki;
+        }
+
+        private Microsoft.Xna.Framework.Color getWhiteSpaceColor()
+        {
+            return Microsoft.Xna.Framework.Color.White;
+        }
+        private Microsoft.Xna.Framework.Color getSystemColor()
+        {
+            return Microsoft.Xna.Framework.Color.White;
+        }
+
+        private string getFormatSecction(string words)
+        {
+            StringBuilder s = new StringBuilder();
+            s.AppendLine("****************************************************");
+            var spacelen = (70 - words.Length) / 2;
+            var space = new String(' ', spacelen > 0 ? spacelen:1);
+            var str = space + words;
+            s.AppendLine(str);
+            s.AppendLine("****************************************************");
+            return s.ToString();
+        }
+
         public async Task Init()
         {
             if (!Context.IsWorldReady) return;
@@ -99,12 +145,13 @@ namespace stardewvalley_ai_mod
             Log("[RPGGO.Init] Get game metadata");
             Log($"[RPGGO.Init] sessionId: {sessionId}");
 
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO . AI"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Name, Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(gameMetadata.Data.Chapters[0].Background, Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO"), getLogoColor());
+            Game1.chatBox.addMessage(getFormatSecction(gameMetadata.Data.Name), getSystemColor());
+
+            Game1.chatBox.addMessage($"Chapter < {gameMetadata.Data.Chapters[0].Name} > starts.", getTitleColor());
+            Game1.chatBox.addMessage("Intro: " + gameMetadata.Data.Chapters[0].Background, getTextColor());
+            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
+            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
 
             if (string.IsNullOrWhiteSpace(sessionId))
             {
@@ -139,35 +186,39 @@ namespace stardewvalley_ai_mod
             return finalString;
         }
 
-        private async Task ChatToNPC(string characterId, string msg, Action<string, string> MessageCallback)
-        {
-            var msgId = RandomString();
-            await client.ChatSseAsync(characterId, gameId, msg, msgId, sessionId, MessageCallback, (_) =>
-            {
+        //private async Task ChatToNPC(string characterId, string msg, Action<string, string> MessageCallback)
+        //{
+        //   var msgId = RandomString();
+        //    await client.ChatSseAsync(characterId, gameId, msg, msgId, sessionId, MessageCallback, (_) =>
+        //    {
+        //
+        //    }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
+        //}
 
-            }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
+
+
+        private void BeforeChapterSwitch(string action_msg, GameOngoingResponse? currentRsp)
+        {
+            Game1.chatBox.addMessage("", getWhiteSpaceColor());
+            Game1.chatBox.addMessage(getFormatSecction("Congrats!"), getSystemColor());
+            Game1.chatBox.addMessage(action_msg, getTextColor());
+            Game1.chatBox.addMessage("", getWhiteSpaceColor());
         }
 
-        private void BeforeChapterSwitch(string action_msg, GameOngoingResponse currentRsp)
+        private void AfterChapterSwitch(string msg, GameOngoingResponse? currentRsp)
         {
-            Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("Congratulations"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(action_msg, Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
-        }
-
-        private void AfterChapterSwitch(string msg, GameOngoingResponse currentRsp)
-        {
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("New chapter"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage($"Chapter <{currentRsp?.Data.Chapter.Name}> starts.", Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(currentRsp?.Data.Chapter.Background, Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage("\n", Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage("\n", getWhiteSpaceColor());
+            Game1.chatBox.addMessage(getFormatSecction("Switch to New chapter"), getSystemColor());
+            Game1.chatBox.addMessage($"Chapter < {currentRsp?.Data.Chapter.Name} > starts.", getTitleColor());
+            Game1.chatBox.addMessage("Intro: " + currentRsp?.Data.Chapter.Background, getTextColor());
+            Game1.chatBox.addMessage("", getWhiteSpaceColor());
         }
 
         private void OnGameEnding(string msg)
         {
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("Game Over"), Microsoft.Xna.Framework.Color.Cyan);
-            Game1.chatBox.addMessage(msg, Microsoft.Xna.Framework.Color.Cyan);
+            Game1.chatBox.addMessage(getFormatSecction("Game Over!"), getSystemColor());
+            Game1.chatBox.addMessage(msg, getTitleColor());
+            Game1.chatBox.addMessage("", getWhiteSpaceColor());
         }
 
         private string GetChatBoxInput()
@@ -218,7 +269,7 @@ namespace stardewvalley_ai_mod
             {
                 Log($"RPGGO.SingleChatToNPC response: {msg}");
                 source.TrySetResult(msg);
-            }, (_) => { });
+            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
             return await source.Task;
         }
 
@@ -239,8 +290,8 @@ namespace stardewvalley_ai_mod
                 {
                     Log($"RPGGO.DoChat npcName:{npcName} chatInput:{chatInput} chrId:{chrId}");
 
-                    Game1.chatBox.addMessage($"{npc.displayName} is thinking", Microsoft.Xna.Framework.Color.Green);
-                    Game1.chatBox.addMessage($" ", Microsoft.Xna.Framework.Color.White);
+                    Game1.chatBox.addMessage($"{npc.displayName} is thinking...", getNPCColor());
+                    Game1.chatBox.addMessage($" ", getWhiteSpaceColor());
 
                     // npc.facePlayer(Game1.player);
                     npc.faceTowardFarmerForPeriod(100 * 1000, 5, false, Game1.player);
@@ -270,8 +321,8 @@ namespace stardewvalley_ai_mod
 
         private async Task ShowNPCMessage(NPC npc, string responseMessage)
         {
-            Game1.chatBox.addMessage($"{npc.displayName}:{responseMessage}", Microsoft.Xna.Framework.Color.Yellow);
-            Game1.chatBox.addMessage(" ", Microsoft.Xna.Framework.Color.White);
+            Game1.chatBox.addMessage($"{npc.displayName}:{responseMessage}", getNPCChatColor());
+            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
 
             int bubbleDuration = 3000;
             foreach (string s in SplitMessage(responseMessage))
