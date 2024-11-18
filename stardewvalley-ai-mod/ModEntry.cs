@@ -4,16 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GenericModConfigMenu;
+using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 
 namespace stardewvalley_ai_mod
 {
-    internal class ModEntry : Mod
+    public class ModEntry : Mod
     {
         RPGGO world;
         private ModConfig config;
+        private SessionConfig session;
 
         public override void Entry(IModHelper helper)
         {
@@ -45,7 +47,7 @@ namespace stardewvalley_ai_mod
 
         private void GameLoop_SaveLoaded(object? sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
-            world = new RPGGO(this, config);
+            world = new RPGGO(this, config, session);
         }
 
         private void Display_MenuChanged(object? sender, StardewModdingAPI.Events.MenuChangedEventArgs e)
@@ -58,7 +60,41 @@ namespace stardewvalley_ai_mod
         {
             Monitor.Log($"Test.GameLoop_GameLaunched");
             this.config = this.Helper.ReadConfig<ModConfig>();
+            this.session = ReadSession();
             ConfigMenu();
+        }
+
+        public SessionConfig ReadSession()
+        {
+            var sessionPath = Path.Join(this.Helper.DirectoryPath, "session.json");
+            Monitor.Log($"ReadSession path: {sessionPath}");
+            try
+            {
+                var jsonContent = File.ReadAllText(sessionPath);
+                var ret = JsonConvert.DeserializeObject<SessionConfig>(jsonContent);
+                Monitor.Log($"ReadSession get sessionId from file: {ret.sessionId}");
+                return ret;
+            } catch (Exception e)
+            {
+                Monitor.Log("Failed to read session");
+                Monitor.Log(e.ToString());
+            }
+            return new SessionConfig();
+        }
+
+        public void SaveSession(SessionConfig session)
+        {
+            var sessionPath = Path.Join(this.Helper.DirectoryPath, "session.json");
+            Monitor.Log($"SaveSession path: {sessionPath}");
+            try
+            {
+                var jsonContent = JsonConvert.SerializeObject(session);
+                File.WriteAllText(sessionPath, jsonContent);
+            } catch (Exception e)
+            {
+                Monitor.Log("Failed to save session");
+                Monitor.Log(e.ToString());
+            }
         }
 
         private void ConfigMenu()
@@ -71,8 +107,15 @@ namespace stardewvalley_ai_mod
 
             configMenu.Register(
                 mod: this.ModManifest,
-                reset: () => this.config = new ModConfig(),
-                save: () => this.Helper.WriteConfig(this.config)
+                reset: () => {
+                    this.config = new ModConfig();
+                    this.session = new SessionConfig();
+                },
+                save: () =>
+                {
+                    this.Helper.WriteConfig(this.config);
+                    SaveSession(this.session);
+                }
             );
 
             configMenu.AddTextOption(
@@ -99,8 +142,8 @@ namespace stardewvalley_ai_mod
             configMenu.AddTextOption(
                 mod: this.ModManifest,
                 name: () => "Session ID",
-                getValue: () => this.config.sessionId,
-                setValue: value => this.config.sessionId = value
+                getValue: () => this.session.sessionId,
+                setValue: value => this.session.sessionId = value
             );
         }
 
