@@ -9,6 +9,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.GameData.Characters;
+using StardewValley.TerrainFeatures;
 using v2api_client_csharp;
 using static StardewValley.Minigames.TargetGame;
 
@@ -30,11 +31,11 @@ namespace stardewvalley_ai_mod
         private string sessionId => session.sessionId;
         private string dmId => config.dmId;
 
-        private ModConfig config;
+        private RPGGOAPIGameConfig config;
         private SessionConfig session;
 
-        private Dictionary<string, string> npcNameToId = new Dictionary<string, string>();
-        private Dictionary<string, string> npcIdToName = new Dictionary<string, string>();
+        private Dictionary<string, string> rpggoNpcNameToId = new Dictionary<string, string>();
+        private Dictionary<string, string> rpggoNpcIdToName = new Dictionary<string, string>();
 
         private Dictionary<string, string> chineseNameToEnglishName = new Dictionary<string, string>
         {
@@ -45,7 +46,7 @@ namespace stardewvalley_ai_mod
         private double lastEmoteTime;
         private bool lastFrameChatBoxActive;
 
-        public RPGGO(ModEntry mod, ModConfig config, SessionConfig session)
+        public RPGGO(ModEntry mod, RPGGOAPIGameConfig config, SessionConfig session)
         {
             this.mod = mod;
             this.config = config;
@@ -56,65 +57,20 @@ namespace stardewvalley_ai_mod
         {
             if (e.Button == SButton.R)
             {
-                var lowerNPCName = targetNPCName.ToLower();
-                Log($"Release R npcName:{lowerNPCName} npcCache.count:{npcCache.Count}");
-                if (npcCache.TryGetValue(lowerNPCName, out var npc))
+                Log($"Release R npcName:{targetNPCName} npcCache.count:{npcCache.Count}");
+                if (npcCache.TryGetValue(targetNPCName, out var npc))
                 {
                     Log($"name:{GetNPCName(npc)} speed:{npc.speed} addedSpeed:{npc.addedSpeed}");
                     npc.addedSpeed = -npc.speed;
                     Game1.chatBox.activate();
                 } else
                 {
-                    Log($"Not found in npcCache name:{lowerNPCName}");
+                    Log($"Not found in npcCache name:{targetNPCName}");
                 }
             }
         }
 
-        private Microsoft.Xna.Framework.Color getLogoColor()
-        {
-            return Microsoft.Xna.Framework.Color.Gold;
-        }
 
-        private Microsoft.Xna.Framework.Color getTitleColor()
-        {
-            return Microsoft.Xna.Framework.Color.Salmon;
-        }
-
-        private Microsoft.Xna.Framework.Color getTextColor()
-        {
-            return Microsoft.Xna.Framework.Color.MistyRose;
-        }
-
-        private Microsoft.Xna.Framework.Color getNPCColor()
-        {
-            return Microsoft.Xna.Framework.Color.LightGreen;
-        }
-
-        private Microsoft.Xna.Framework.Color getNPCChatColor()
-        {
-            return Microsoft.Xna.Framework.Color.Khaki;
-        }
-
-        private Microsoft.Xna.Framework.Color getWhiteSpaceColor()
-        {
-            return Microsoft.Xna.Framework.Color.White;
-        }
-        private Microsoft.Xna.Framework.Color getSystemColor()
-        {
-            return Microsoft.Xna.Framework.Color.White;
-        }
-
-        private string getFormatSecction(string words)
-        {
-            StringBuilder s = new StringBuilder();
-            s.AppendLine("****************************************************");
-            var spacelen = (70 - words.Length) / 2;
-            var space = new String(' ', spacelen > 0 ? spacelen:1);
-            var str = space + words;
-            s.AppendLine(str);
-            s.AppendLine("****************************************************");
-            return s.ToString();
-        }
 
         public async Task Init()
         {
@@ -128,44 +84,55 @@ namespace stardewvalley_ai_mod
 
             Game1.chatBox.chatBox.OnEnterPressed += ChatBox_OnEnterPressed;
 
-            // request game data
             Log($"[RPGGO.Init] new client with apiKey:{apiKey}");
-            client = new RPGGOClient(apiKey);
-            var gameMetadata = await client.GetGameMetadataAsync(gameId);
+            RPGGOUtils.Init(this.config, this.mod.Monitor);
+
+            // update config
+            this.config.stardewCharacters = StardewHelper.GetNPCsForConfig();
+            var gameCharactersDict = await RPGGOUtils.GetAllGameCharacters(this.config.gameId);
+            this.config.gameCharacters = gameCharactersDict.Keys.ToArray();
+            this.mod.SaveRPGGOConfig(this.config);
+
+            // reset Menu
+            this.mod.ResetConfigMenu();
+
+            // request game data
+            var gameMetadata = await RPGGOUtils.GetClient().GetGameMetadataAsync(gameId);
 
             Log($"[RPGGO.Init] Game Name: {gameMetadata.Data.Name}");
             Log($"[RPGGO.Init] Intro: {gameMetadata.Data.Intro}");
             Log($"[RPGGO.Init] Chapters: {gameMetadata.Data.Chapters.Count}");
 
+            // get all characters info
             foreach (var chr in gameMetadata.Data.Chapters[0].Characters)
             {
                 Log($"[RPGGO.Init] Character id: {chr.Id} name: {chr.Name}");
-                npcNameToId[chr.Name.ToLower()] = chr.Id;
-                npcIdToName[chr.Id] = chr.Name;
+                rpggoNpcNameToId[chr.Name] = chr.Id;
+                rpggoNpcIdToName[chr.Id] = chr.Name;
             }
 
             Log("[RPGGO.Init] Get game metadata");
             Log($"[RPGGO.Init] sessionId: {sessionId}");
 
-            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO"), getLogoColor());
-            Game1.chatBox.addMessage(getFormatSecction(gameMetadata.Data.Name), getSystemColor());
+            Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO"), StrFormater.getLogoColor());
+            Game1.chatBox.addMessage(StrFormater.getFormatSecction(gameMetadata.Data.Name), StrFormater.getSystemColor());
 
-            Game1.chatBox.addMessage($"Chapter < {gameMetadata.Data.Chapters[0].Name} > starts.", getTitleColor());
-            Game1.chatBox.addMessage("Intro: " + gameMetadata.Data.Chapters[0].Background, getTextColor());
-            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
-            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
+            Game1.chatBox.addMessage($"Chapter < {gameMetadata.Data.Chapters[0].Name} > starts.", StrFormater.getTitleColor());
+            Game1.chatBox.addMessage("Intro: " + gameMetadata.Data.Chapters[0].Background, StrFormater.getTextColor());
+            Game1.chatBox.addMessage(" ", StrFormater.getWhiteSpaceColor());
+            Game1.chatBox.addMessage(" ", StrFormater.getWhiteSpaceColor());
 
             if (string.IsNullOrWhiteSpace(sessionId))
             {
-                session.sessionId = RandomString();
+                session.sessionId = RPGGOUtils.RandomString();
                 mod.SaveSession(session);
                 Log($"[RPGGO.Init] Start game sessionId: {sessionId}");
-                await client.StartGameAsync(gameId, sessionId);
+                await RPGGOUtils.GetClient().StartGameAsync(gameId, sessionId);
             }
             else
             {
                 Log($"[RPGGO.Init] Resume game sessionId: {sessionId}");
-                await client.ResumeSessionAsync(gameId, sessionId);
+                await RPGGOUtils.GetClient().ResumeSessionAsync(gameId, sessionId);
             }
 
             inited = true;
@@ -173,55 +140,6 @@ namespace stardewvalley_ai_mod
             Log("[RPGGO.Init] Inited");
         }
 
-        private string RandomString(int length=8)
-        {
-            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            var stringChars = new char[length];
-            var random = new Random();
-
-            for (int i = 0; i < stringChars.Length; i++)
-            {
-                stringChars[i] = chars[random.Next(chars.Length)];
-            }
-
-            var finalString = new String(stringChars);
-            return finalString;
-        }
-
-        //private async Task ChatToNPC(string characterId, string msg, Action<string, string> MessageCallback)
-        //{
-        //   var msgId = RandomString();
-        //    await client.ChatSseAsync(characterId, gameId, msg, msgId, sessionId, MessageCallback, (_) =>
-        //    {
-        //
-        //    }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
-        //}
-
-
-
-        private void BeforeChapterSwitch(string action_msg, GameOngoingResponse? currentRsp)
-        {
-            Game1.chatBox.addMessage("", getWhiteSpaceColor());
-            Game1.chatBox.addMessage(getFormatSecction("Congrats!"), getSystemColor());
-            Game1.chatBox.addMessage(action_msg, getTextColor());
-            Game1.chatBox.addMessage("", getWhiteSpaceColor());
-        }
-
-        private void AfterChapterSwitch(string msg, GameOngoingResponse? currentRsp)
-        {
-            Game1.chatBox.addMessage("\n", getWhiteSpaceColor());
-            Game1.chatBox.addMessage(getFormatSecction("Switch to New chapter"), getSystemColor());
-            Game1.chatBox.addMessage($"Chapter < {currentRsp?.Data.Chapter.Name} > starts.", getTitleColor());
-            Game1.chatBox.addMessage("Intro: " + currentRsp?.Data.Chapter.Background, getTextColor());
-            Game1.chatBox.addMessage("", getWhiteSpaceColor());
-        }
-
-        private void OnGameEnding(string msg)
-        {
-            Game1.chatBox.addMessage(getFormatSecction("Game Over!"), getSystemColor());
-            Game1.chatBox.addMessage(msg, getTitleColor());
-            Game1.chatBox.addMessage("", getWhiteSpaceColor());
-        }
 
         private string GetChatBoxInput()
         {
@@ -237,7 +155,7 @@ namespace stardewvalley_ai_mod
 
         private bool TryGetCharacterIdFromName(string name, out string id)
         {
-            if (npcNameToId.TryGetValue(name.ToLower(), out id))
+            if (rpggoNpcNameToId.TryGetValue(name, out id))
             {
                 return true;
             }
@@ -246,7 +164,7 @@ namespace stardewvalley_ai_mod
 
         private bool TryGetCharacterNameFromId(string id, out string name)
         {
-            if (npcIdToName.TryGetValue(id, out name)) {
+            if (rpggoNpcIdToName.TryGetValue(id, out name)) {
                 return true;
             }
             return false;
@@ -262,18 +180,7 @@ namespace stardewvalley_ai_mod
             return splits;
         }
 
-        private async Task<string> SingleChatToNPC(string chrId, string chatInput)
-        {
-            Log($"RPGGO.SingleChatToNPC npcName:{chrId} chatInput:{chatInput}");
-            var source = new TaskCompletionSource<string>();
-            var msgId = RandomString();
-            await client.ChatSseAsync(chrId, gameId, chatInput, msgId, sessionId, (chrId, msg) =>
-            {
-                Log($"RPGGO.SingleChatToNPC response: {msg}");
-                source.TrySetResult(msg);
-            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
-            return await source.Task;
-        }
+
 
         private int GetFriendshipPoints(string npcName)
         {
@@ -286,21 +193,22 @@ namespace stardewvalley_ai_mod
 
         private async Task DoChat(string npcName, string chatInput)
         {
-            if (npcCache.TryGetValue(npcName.ToLower(), out var npc))
+            if (npcCache.TryGetValue(npcName, out var npc))
             {
-                if (TryGetCharacterIdFromName(npcName, out var chrId))
+                var rpggoCharName = this.config.GetBindedRPGGOChar(npcName);
+                if (TryGetCharacterIdFromName(rpggoCharName, out var chrId))
                 {
                     Log($"RPGGO.DoChat npcName:{npcName} chatInput:{chatInput} chrId:{chrId}");
 
-                    Game1.chatBox.addMessage($"{npc.displayName} is thinking...", getNPCColor());
-                    Game1.chatBox.addMessage($" ", getWhiteSpaceColor());
+                    Game1.chatBox.addMessage($"{npc.displayName}[|{rpggoCharName}]is thinking...", StrFormater.getNPCColor());
+                    Game1.chatBox.addMessage($" ", StrFormater.getWhiteSpaceColor());
 
                     // npc.facePlayer(Game1.player);
                     npc.faceTowardFarmerForPeriod(100 * 1000, 5, false, Game1.player);
                     npc.hasJustStartedFacingPlayer = true;
 
                     // await ChatToNPC(chrId, chatInput, OnTalkMessageCallback);
-                    var response = await SingleChatToNPC(chrId, chatInput);
+                    var response = await RPGGOUtils.SingleChatToNPC(gameId, sessionId, chrId, chatInput);
 
                     ShowNPCMessage(npc, response);
                     var affection = await QueryNPCAffection(npcName);
@@ -323,8 +231,9 @@ namespace stardewvalley_ai_mod
 
         private async Task ShowNPCMessage(NPC npc, string responseMessage)
         {
-            Game1.chatBox.addMessage($"{npc.displayName}:{responseMessage}", getNPCChatColor());
-            Game1.chatBox.addMessage(" ", getWhiteSpaceColor());
+            var rpggoCharName = this.config.GetBindedRPGGOChar(npc.displayName);
+            Game1.chatBox.addMessage($"{npc.displayName}[|{rpggoCharName}]:{responseMessage}", StrFormater.getNPCChatColor());
+            Game1.chatBox.addMessage(" ", StrFormater.getWhiteSpaceColor());
 
             int bubbleDuration = 3000;
             foreach (string s in SplitMessage(responseMessage))
@@ -338,8 +247,9 @@ namespace stardewvalley_ai_mod
         private async Task<int> QueryNPCAffection(string npcName)
         {
             var source = new TaskCompletionSource<int>();
-            var msgId = RandomString();
-            await client.ChatSseAsync(dmId, gameId, $"Give me {npcName}'s Affection", msgId, sessionId, (chrId, msg) =>
+            var msgId = RPGGOUtils.RandomString();
+            var rpggoCharName = this.config.GetBindedRPGGOChar(npcName);
+            await RPGGOUtils.GetClient().ChatSseAsync(dmId, gameId, $"Give me {rpggoCharName}'s Affection", msgId, sessionId, (chrId, msg) =>
             {
                 Log($"RPGGO.QueryNPCAffection response: {msg}");
                 var matches = affectionRegex.Matches(msg);
@@ -368,7 +278,7 @@ namespace stardewvalley_ai_mod
             if (TryGetCharacterNameFromId(chrId, out var chrName))
             {
                 Log($"RPGGO.DoChat npcName:{chrName} chrId:{chrId} responseText:{msg}");
-                if (npcCache.TryGetValue(chrName.ToLower(), out var npc))
+                if (npcCache.TryGetValue(chrName, out var npc))
                 {
                     ShowNPCMessage(npc, msg);
                 } else if (chrName == "Affection Mornitor")
@@ -376,7 +286,7 @@ namespace stardewvalley_ai_mod
                     var match = affectionRegex.Match(msg);
                     if (match.Success) {
                         var groups = match.Groups;
-                        var npcName = groups[1].Value.ToLower();
+                        var npcName = groups[1].Value;
                         var affection = int.Parse(groups[2].Value);
                         Log($"RPGGO OnTalkMessageCallback Change affection for npc: {npcName}, affection: {affection}");
                         if (npcCache.TryGetValue(npcName, out var affectedNPC))
@@ -401,7 +311,7 @@ namespace stardewvalley_ai_mod
             Log($"RPGGO.ChatBox_OnEnterPressed npcTarget:{targetNPCName} input:{chatInput}");
 
             // recover speed
-            if (npcCache.TryGetValue(targetNPCName.ToLower(), out var npc))
+            if (npcCache.TryGetValue(targetNPCName, out var npc))
             {
                 npc.addedSpeed = 0;
             }
@@ -433,9 +343,9 @@ namespace stardewvalley_ai_mod
             {
                 if (!Game1.chatBox.isActive() && lastFrameChatBoxActive)
                 {
-                    Log($"ChatBox closed. Release npc {targetNPCName.ToLower()}");
+                    Log($"ChatBox closed. Release npc {targetNPCName}");
                     // 释放NPC移动
-                    if (npcCache.TryGetValue(targetNPCName.ToLower(), out var npc))
+                    if (npcCache.TryGetValue(targetNPCName, out var npc))
                     {
                         npc.addedSpeed = 0;
                     }
@@ -456,10 +366,11 @@ namespace stardewvalley_ai_mod
             {
                 foreach (var npc in loc.characters)
                 {
-                    npcCache[GetNPCName(npc).ToLower()] = npc;
+                    npcCache[GetNPCName(npc)] = npc;
                     // npc.startGlowing(Microsoft.Xna.Framework.Color.Cyan, true, 0.01f);
 
-                    if (npcNameToId.ContainsKey(GetNPCName(npc).ToLower()))
+                    var rpggoCharName = this.config.GetBindedRPGGOChar(GetNPCName(npc));
+                    if (rpggoNpcNameToId.ContainsKey(rpggoCharName))
                     {
                         npc.doEmote(2);
                     }
@@ -485,11 +396,12 @@ namespace stardewvalley_ai_mod
             // Glow
             foreach (var (_, npc) in npcCache)
             {
+                var rpggoCharName = this.config.GetBindedRPGGOChar(GetNPCName(npc));
                 if (GetNPCName(npc) != targetNPCName && npc.isGlowing)
                 {
                     npc.stopGlowing();
                 }
-                else if (npcNameToId.TryGetValue(GetNPCName(npc), out var _) && GetNPCName(npc) == targetNPCName && !npc.isGlowing)
+                else if (rpggoNpcNameToId.TryGetValue(rpggoCharName, out var _) && GetNPCName(npc) == targetNPCName && !npc.isGlowing)
                 {
                     npc.startGlowing(Microsoft.Xna.Framework.Color.Purple, border: false, 0.01f);
                 }
