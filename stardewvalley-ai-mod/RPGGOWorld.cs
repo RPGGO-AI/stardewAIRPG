@@ -15,7 +15,7 @@ using static StardewValley.Minigames.TargetGame;
 
 namespace stardewvalley_ai_mod
 {
-    public class RPGGO
+    public class RPGGOWorld
     {
         private bool inited = false;
         private bool initing = false;
@@ -29,7 +29,6 @@ namespace stardewvalley_ai_mod
         private string gameId => config.gameId;
         private string apiKey => config.apiKey;
         private string sessionId => session.sessionId;
-        private string dmId => config.dmId;
 
         private RPGGOAPIGameConfig config;
         private SessionConfig session;
@@ -37,16 +36,12 @@ namespace stardewvalley_ai_mod
         private Dictionary<string, string> rpggoNpcNameToId = new Dictionary<string, string>();
         private Dictionary<string, string> rpggoNpcIdToName = new Dictionary<string, string>();
 
-        private Dictionary<string, string> chineseNameToEnglishName = new Dictionary<string, string>
-        {
-            { "塞巴斯蒂安", "sebastian" }, { "潘妮", "penny" }, { "阿比盖尔", "abigail" }, { "山姆", "sam" }
-        };
 
         private Regex affectionRegex = new Regex("(\\w+?)'s.+?(\\d+)%");
         private double lastEmoteTime;
         private bool lastFrameChatBoxActive;
 
-        public RPGGO(ModEntry mod, RPGGOAPIGameConfig config, SessionConfig session)
+        public RPGGOWorld(ModEntry mod, RPGGOAPIGameConfig config, SessionConfig session)
         {
             this.mod = mod;
             this.config = config;
@@ -181,16 +176,6 @@ namespace stardewvalley_ai_mod
         }
 
 
-
-        private int GetFriendshipPoints(string npcName)
-        {
-            if (!Game1.player.friendshipData.TryGetValue(npcName, out var friendship))
-            {
-                return 0;
-            }
-            return friendship.Points;
-        }
-
         private async Task DoChat(string npcName, string chatInput)
         {
             if (npcCache.TryGetValue(npcName, out var npc))
@@ -211,12 +196,6 @@ namespace stardewvalley_ai_mod
                     var response = await RPGGOUtils.SingleChatToNPC(gameId, sessionId, chrId, chatInput);
 
                     ShowNPCMessage(npc, response);
-                    var affection = await QueryNPCAffection(npcName);
-
-                    var old = GetFriendshipPoints(npcName);
-                    var amount = affection - old;
-                    Log($"RPGGO.DoChat npcName:{npcName} changed friendship point:{amount} new:{affection}");
-                    Game1.player.changeFriendship(amount, npc);
                 }
                 else
                 {
@@ -242,34 +221,6 @@ namespace stardewvalley_ai_mod
                 npc.showTextAboveHead(s, null, 2, bubbleDuration);
                 await Task.Delay(bubbleDuration);
             }
-        }
-
-        private async Task<int> QueryNPCAffection(string npcName)
-        {
-            var source = new TaskCompletionSource<int>();
-            var msgId = RPGGOUtils.RandomString();
-            var rpggoCharName = this.config.GetBindedRPGGOChar(npcName);
-            await RPGGOUtils.GetClient().ChatSseAsync(dmId, gameId, $"Give me {rpggoCharName}'s Affection", msgId, sessionId, (chrId, msg) =>
-            {
-                Log($"RPGGO.QueryNPCAffection response: {msg}");
-                var matches = affectionRegex.Matches(msg);
-                foreach (Match match in matches)
-                {
-                    var groups = match.Groups;
-                    var matchName = groups[1].Value;
-                    var matchAffection = groups[2].Value;
-                    if (matchName == npcName)
-                    {
-                        if (int.TryParse(matchAffection, out var intAffection))
-                        {
-                            source.TrySetResult(intAffection);
-                            return;
-                        }
-                    }
-                }
-                source.TrySetResult(0);
-            }, (_) => { });
-            return await source.Task;
         }
 
         private void OnTalkMessageCallback(string chrId, string msg)

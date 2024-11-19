@@ -20,7 +20,6 @@ namespace stardewvalley_ai_mod
     public class RPGGOAPIGameConfig
     {
         public string gameId = "";
-        public string dmId = "";
         public string apiKey = "";
         public string[] stardewCharacters = { };
         public string[] gameCharacters = {};

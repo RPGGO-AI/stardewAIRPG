@@ -22,5 +22,14 @@ namespace stardewvalley_ai_mod
             stardewNPCNames.Sort();
             return stardewNPCNames.ToArray();
         }
+
+        public static int GetFriendshipPoints(string npcName)
+        {
+            if (!Game1.player.friendshipData.TryGetValue(npcName, out var friendship))
+            {
+                return 0;
+            }
+            return friendship.Points;
+        }
     }
 }
