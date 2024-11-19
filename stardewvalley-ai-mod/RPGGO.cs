@@ -30,6 +30,8 @@ namespace stardewvalley_ai_mod
         private string sessionId => session.sessionId;
         private string dmId => config.dmId;
 
+        private int chapterIndex = 0;
+
         private ModConfig config;
         private SessionConfig session;
 
@@ -87,7 +89,7 @@ namespace stardewvalley_ai_mod
 
         private Microsoft.Xna.Framework.Color getNPCColor()
         {
-            return Microsoft.Xna.Framework.Color.LightGreen;
+            return Microsoft.Xna.Framework.Color.LemonChiffon;
         }
 
         private Microsoft.Xna.Framework.Color getNPCChatColor()
@@ -188,16 +190,6 @@ namespace stardewvalley_ai_mod
             return finalString;
         }
 
-        //private async Task ChatToNPC(string characterId, string msg, Action<string, string> MessageCallback)
-        //{
-        //   var msgId = RandomString();
-        //    await client.ChatSseAsync(characterId, gameId, msg, msgId, sessionId, MessageCallback, (_) =>
-        //    {
-        //
-        //    }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
-        //}
-
-
 
         private void BeforeChapterSwitch(string action_msg, GameOngoingResponse? currentRsp)
         {
@@ -214,6 +206,7 @@ namespace stardewvalley_ai_mod
             Game1.chatBox.addMessage($"Chapter < {currentRsp?.Data.Chapter.Name} > starts.", getTitleColor());
             Game1.chatBox.addMessage("Intro: " + currentRsp?.Data.Chapter.Background, getTextColor());
             Game1.chatBox.addMessage("", getWhiteSpaceColor());
+            chapterIndex += 1;
         }
 
         private void OnGameEnding(string msg)
@@ -303,12 +296,17 @@ namespace stardewvalley_ai_mod
                     var response = await SingleChatToNPC(chrId, chatInput);
 
                     ShowNPCMessage(npc, response);
-                    var affection = await QueryNPCAffection(npcName);
 
-                    var old = GetFriendshipPoints(npcName);
-                    var amount = affection - old;
-                    Log($"RPGGO.DoChat npcName:{npcName} changed friendship point:{amount} new:{affection}");
-                    Game1.player.changeFriendship(amount, npc);
+                    // Only first chapter allow Affection
+                    if (chapterIndex == 0)
+                    {
+                        var affection = await QueryNPCAffection(npcName);
+
+                        var old = GetFriendshipPoints(npcName);
+                        var amount = affection - old;
+                        Log($"RPGGO.DoChat npcName:{npcName} changed friendship point:{amount} new:{affection}");
+                        Game1.player.changeFriendship(amount, npc);
+                    }
                 }
                 else
                 {
