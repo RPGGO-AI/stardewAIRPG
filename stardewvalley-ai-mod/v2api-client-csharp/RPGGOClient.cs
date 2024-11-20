@@ -248,7 +248,7 @@ namespace v2api_client_csharp
                     else if (line.StartsWith("data:"))
                     {
                         // Extract data after the 'data:' field
-                        completeMessage += line.Substring(5).Trim() + " ";
+                        completeMessage = line.Substring(5).Trim() + " ";
                     }
                     else
                     {

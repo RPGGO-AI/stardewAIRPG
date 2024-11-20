@@ -14,7 +14,7 @@ namespace stardewvalley_ai_mod
 {
     public class ModEntry : Mod
     {
-        RPGGOWorld world;
+        GameWorld world;
         private RPGGOAPIGameConfig config;
         private SessionConfig session;
 
@@ -48,7 +48,7 @@ namespace stardewvalley_ai_mod
 
         private void GameLoop_SaveLoaded(object? sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
-            world = new RPGGOWorld(this, config, session);
+            world = new GameWorld(this, config, session);
         }
 
         private void Display_MenuChanged(object? sender, StardewModdingAPI.Events.MenuChangedEventArgs e)

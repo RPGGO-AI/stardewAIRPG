@@ -15,7 +15,7 @@ using static StardewValley.Minigames.TargetGame;
 
 namespace stardewvalley_ai_mod
 {
-    public class RPGGOWorld
+    public class GameWorld
     {
         private bool inited = false;
         private bool initing = false;
@@ -37,7 +37,7 @@ namespace stardewvalley_ai_mod
         private double lastEmoteTime;
         private bool lastFrameChatBoxActive;
 
-        public RPGGOWorld(ModEntry mod, RPGGOAPIGameConfig config, SessionConfig session)
+        public GameWorld(ModEntry mod, RPGGOAPIGameConfig config, SessionConfig session)
         {
             this.mod = mod;
             this.config = config;
@@ -162,7 +162,7 @@ namespace stardewvalley_ai_mod
                 {
                     Log($"RPGGO.DoChat npcName:{npcName} chatInput:{chatInput} chrId:{chrId}");
 
-                    Game1.chatBox.addMessage($"{npc.displayName}[|{rpggoCharName}]is thinking...", StrFormater.getNPCColor());
+                    Game1.chatBox.addMessage($"{npc.displayName}[**{rpggoCharName}**]is thinking...", StrFormater.getNPCColor());
                     Game1.chatBox.addMessage($" ", StrFormater.getWhiteSpaceColor());
 
                     // npc.facePlayer(Game1.player);
@@ -188,7 +188,7 @@ namespace stardewvalley_ai_mod
         private async Task ShowNPCMessage(NPC npc, string responseMessage)
         {
             var rpggoCharName = this.config.GetBindedRPGGOChar(npc.displayName);
-            Game1.chatBox.addMessage($"{npc.displayName}[|{rpggoCharName}]:{responseMessage}", StrFormater.getNPCChatColor());
+            Game1.chatBox.addMessage($"{npc.displayName}[**{rpggoCharName}**]:{responseMessage}", StrFormater.getNPCChatColor());
             Game1.chatBox.addMessage(" ", StrFormater.getWhiteSpaceColor());
 
             int bubbleDuration = 3000;
