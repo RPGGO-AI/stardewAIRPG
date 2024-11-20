@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -143,7 +144,8 @@ namespace v2api_client_csharp
             Action<string> onImageMessageReceived = null,
             Action<string, GameOngoingResponse?> onBeforeChapterSwitch = null,
             Action<string, GameOngoingResponse?> onAfterChapterSwitch = null,
-            Action<string> onGameEndingMessageReceived = null)
+            Action<string> onGameEndingMessageReceived = null,
+            Action<string> onGameErrorReceived = null)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -177,11 +179,16 @@ namespace v2api_client_csharp
                     {
                         if (!string.IsNullOrWhiteSpace(completeMessage))
                         {
+                            if (completeMessage.Contains("event: err"))
+                            {
+                                onGameErrorReceived?.Invoke(completeMessage);
+                                break;
+                            }
                             if (completeMessage.Contains("The game session has ended"))
                             {
                                 onGameEndingMessageReceived?.Invoke("The game session has ended. You need to restart the game.");
                                 completeMessage = string.Empty;
-                            }   
+                            }
 
                             // Trigger callback when the message is complete
                             var sseMsg = JsonConvert.DeserializeObject<SSEResponse>(completeMessage);
@@ -224,15 +231,15 @@ namespace v2api_client_csharp
                                         Console.WriteLine($"switch to new chapter {next_chapter_id}");
                                         // switch to new chapter and pass new metadata for application processing
                                         onAfterChapterSwitch?.Invoke(sseMsg.Data.GameStatus.ActionMessage, new_meta_response);
-                                        
+
                                     }
                                     else if (sseMsg.Data.Result.CharacterType == "goal_check_dm" && sseMsg.Data.GameStatus.Action == 3)
                                     {
                                         onGameEndingMessageReceived?.Invoke(sseMsg.Data.GameStatus.ActionMessage);
                                     }
                                 }
-                                  
- 
+
+
                             }
 
                             completeMessage = string.Empty;
@@ -241,7 +248,11 @@ namespace v2api_client_csharp
                     else if (line.StartsWith("data:"))
                     {
                         // Extract data after the 'data:' field
-                        completeMessage += line.Substring(5).Trim();
+                        completeMessage += line.Substring(5).Trim() + " ";
+                    }
+                    else
+                    {
+                        completeMessage += line + " ";
                     }
                 }
             }

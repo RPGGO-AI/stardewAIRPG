@@ -41,6 +41,10 @@ namespace stardewvalley_ai_mod
         {
             return Microsoft.Xna.Framework.Color.White;
         }
+        public static Microsoft.Xna.Framework.Color getSystemErrorColor()
+        {
+            return Microsoft.Xna.Framework.Color.OrangeRed;
+        }
 
         public static string getFormatSecction(string words)
         {

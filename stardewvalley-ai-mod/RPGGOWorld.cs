@@ -33,10 +33,6 @@ namespace stardewvalley_ai_mod
         private RPGGOAPIGameConfig config;
         private SessionConfig session;
 
-        private Dictionary<string, string> rpggoNpcNameToId = new Dictionary<string, string>();
-        private Dictionary<string, string> rpggoNpcIdToName = new Dictionary<string, string>();
-
-
         private Regex affectionRegex = new Regex("(\\w+?)'s.+?(\\d+)%");
         private double lastEmoteTime;
         private bool lastFrameChatBoxActive;
@@ -64,7 +60,6 @@ namespace stardewvalley_ai_mod
                 }
             }
         }
-
 
 
         public async Task Init()
@@ -98,18 +93,14 @@ namespace stardewvalley_ai_mod
             Log($"[RPGGO.Init] Intro: {gameMetadata.Data.Intro}");
             Log($"[RPGGO.Init] Chapters: {gameMetadata.Data.Chapters.Count}");
 
-            // get all characters info
-            foreach (var chr in gameMetadata.Data.Chapters[0].Characters)
-            {
-                Log($"[RPGGO.Init] Character id: {chr.Id} name: {chr.Name}");
-                rpggoNpcNameToId[chr.Name] = chr.Id;
-                rpggoNpcIdToName[chr.Id] = chr.Name;
-            }
+            // get all characters info in Chapter 1
+            RPGGOUtils.RefreshCharactersInChapter(gameMetadata.Data.Chapters[0]);
 
             Log("[RPGGO.Init] Get game metadata");
             Log($"[RPGGO.Init] sessionId: {sessionId}");
 
             Game1.chatBox.addMessage(FiggleFonts.Slant.Render("RPGGO"), StrFormater.getLogoColor());
+
             Game1.chatBox.addMessage(StrFormater.getFormatSecction(gameMetadata.Data.Name), StrFormater.getSystemColor());
 
             Game1.chatBox.addMessage($"Chapter < {gameMetadata.Data.Chapters[0].Name} > starts.", StrFormater.getTitleColor());
@@ -148,22 +139,8 @@ namespace stardewvalley_ai_mod
             return "";
         }
 
-        private bool TryGetCharacterIdFromName(string name, out string id)
-        {
-            if (rpggoNpcNameToId.TryGetValue(name, out id))
-            {
-                return true;
-            }
-            return false;
-        }
 
-        private bool TryGetCharacterNameFromId(string id, out string name)
-        {
-            if (rpggoNpcIdToName.TryGetValue(id, out name)) {
-                return true;
-            }
-            return false;
-        }
+
 
         private IEnumerable<string> SplitMessage(string message)
         {
@@ -181,7 +158,7 @@ namespace stardewvalley_ai_mod
             if (npcCache.TryGetValue(npcName, out var npc))
             {
                 var rpggoCharName = this.config.GetBindedRPGGOChar(npcName);
-                if (TryGetCharacterIdFromName(rpggoCharName, out var chrId))
+                if (RPGGOUtils.TryGetRPGGOCharacterIdByName(rpggoCharName, out var chrId))
                 {
                     Log($"RPGGO.DoChat npcName:{npcName} chatInput:{chatInput} chrId:{chrId}");
 
@@ -226,7 +203,7 @@ namespace stardewvalley_ai_mod
         private void OnTalkMessageCallback(string chrId, string msg)
         {
             Log($"RPGGO OnTalkMessageCallback chrId:{chrId} msg:{msg}");
-            if (TryGetCharacterNameFromId(chrId, out var chrName))
+            if (RPGGOUtils.TryGetRPGGOCharacterNameById(chrId, out var chrName))
             {
                 Log($"RPGGO.DoChat npcName:{chrName} chrId:{chrId} responseText:{msg}");
                 if (npcCache.TryGetValue(chrName, out var npc))
@@ -321,7 +298,7 @@ namespace stardewvalley_ai_mod
                     // npc.startGlowing(Microsoft.Xna.Framework.Color.Cyan, true, 0.01f);
 
                     var rpggoCharName = this.config.GetBindedRPGGOChar(GetNPCName(npc));
-                    if (rpggoNpcNameToId.ContainsKey(rpggoCharName))
+                    if (RPGGOUtils.IsRPGGOCharacterNameExist(rpggoCharName))
                     {
                         npc.doEmote(2);
                     }
@@ -352,7 +329,7 @@ namespace stardewvalley_ai_mod
                 {
                     npc.stopGlowing();
                 }
-                else if (rpggoNpcNameToId.TryGetValue(rpggoCharName, out var _) && GetNPCName(npc) == targetNPCName && !npc.isGlowing)
+                else if (RPGGOUtils.IsRPGGOCharacterNameExist(rpggoCharName) && GetNPCName(npc) == targetNPCName && !npc.isGlowing)
                 {
                     npc.startGlowing(Microsoft.Xna.Framework.Color.Purple, border: false, 0.01f);
                 }

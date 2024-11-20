@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using v2api_client_csharp;
 using StardewModdingAPI;
+using System.Net.NetworkInformation;
 namespace stardewvalley_ai_mod
 {
     internal class RPGGOUtils
@@ -14,6 +15,10 @@ namespace stardewvalley_ai_mod
         private static RPGGOClient? _client = null;
         private static RPGGOAPIGameConfig? _config = null;
         private static IMonitor? _monitor = null;
+
+
+        private static Dictionary<string, string> rpggoNpcNameToId = new Dictionary<string, string>();
+        private static Dictionary<string, string> rpggoNpcIdToName = new Dictionary<string, string>();
 
         public static void Init(RPGGOAPIGameConfig config, IMonitor monitor, string? testEndpoint = null)
         {
@@ -66,6 +71,8 @@ namespace stardewvalley_ai_mod
             Game1.chatBox.addMessage($"Chapter < {currentRsp?.Data.Chapter.Name} > starts.", StrFormater.getTitleColor());
             Game1.chatBox.addMessage("Intro: " + currentRsp?.Data.Chapter.Background, StrFormater.getTextColor());
             Game1.chatBox.addMessage("", StrFormater.getWhiteSpaceColor());
+
+            RefreshCharactersInChapter(currentRsp?.Data.Chapter);
         }
 
         private static void OnGameEnding(string msg)
@@ -73,6 +80,50 @@ namespace stardewvalley_ai_mod
             Game1.chatBox.addMessage(StrFormater.getFormatSecction("Game Over!"), StrFormater.getSystemColor());
             Game1.chatBox.addMessage(msg, StrFormater.getTitleColor());
             Game1.chatBox.addMessage("", StrFormater.getWhiteSpaceColor());
+        }
+
+        private static void onGameErrorReceived(string msg)
+        {
+            Game1.chatBox.addMessage("system error: " + msg, StrFormater.getSystemErrorColor());
+            Game1.chatBox.addMessage("", StrFormater.getWhiteSpaceColor());
+        }
+
+        public static void RefreshCharactersInChapter(Chapter? chapter)
+        {
+            if (chapter == null)
+                return;
+            
+            rpggoNpcNameToId.Clear();
+            rpggoNpcIdToName.Clear();
+            foreach (var chr in chapter.Characters)
+            {
+                _monitor?.Log($"[RPGGO.Init] Character id: {chr.Id} name: {chr.Name}");
+                rpggoNpcNameToId[chr.Name] = chr.Id;
+                rpggoNpcIdToName[chr.Id] = chr.Name;
+            }
+        }
+
+        public static bool TryGetRPGGOCharacterNameById(string id, out string name)
+        {
+            if (rpggoNpcIdToName.TryGetValue(id, out name))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool TryGetRPGGOCharacterIdByName(string name, out string id)
+        {
+            if (rpggoNpcNameToId.TryGetValue(name, out id))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool IsRPGGOCharacterNameExist(string name)
+        {
+            return rpggoNpcNameToId.ContainsKey(name);
         }
 
         public static string RandomString(int length = 8)
@@ -99,7 +150,7 @@ namespace stardewvalley_ai_mod
             {
                 _monitor?.Log($"RPGGO.SingleChatToNPC response: {msg}");
                 source.TrySetResult(msg);
-            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding);
+            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding, onGameErrorReceived);
             return await source.Task;
         }
     }
