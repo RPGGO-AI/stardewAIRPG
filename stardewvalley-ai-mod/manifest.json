@@ -1,10 +1,10 @@
 {
-    "Name": "RPGGO Stardew AI Mod",
-    "Author": "RPGGO",
-    "Version": "1.0.0",
-    "Description": "RPGGO Stardew AI Mod",
-    "UniqueID": "RPGGO.StardewAIMod",
-    "EntryDll": "stardewvalley-ai-mod.dll",
-    "MinimumApiVersion": "4.0.0",
-    "UpdateKeys": []
+  "Name": "Stardew AI-RPG Mod",
+  "Author": "liberty4funny",
+  "Version": "1.1.0",
+  "Description": "",
+  "UniqueID": "Stardew.AIRPGMod",
+  "EntryDll": "stardewvalley-ai-mod.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
 }

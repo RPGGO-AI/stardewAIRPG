@@ -8,13 +8,14 @@ using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using v2api_client_csharp;
 
 namespace stardewvalley_ai_mod
 {
     public class ModEntry : Mod
     {
-        RPGGO world;
-        private ModConfig config;
+        GameWorld world;
+        private RPGGOAPIGameConfig config;
         private SessionConfig session;
 
         public override void Entry(IModHelper helper)
@@ -47,7 +48,7 @@ namespace stardewvalley_ai_mod
 
         private void GameLoop_SaveLoaded(object? sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
-            world = new RPGGO(this, config, session);
+            world = new GameWorld(this, config, session);
         }
 
         private void Display_MenuChanged(object? sender, StardewModdingAPI.Events.MenuChangedEventArgs e)
@@ -57,47 +58,84 @@ namespace stardewvalley_ai_mod
         }
 
         private void GameLoop_GameLaunched(object? sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
+
+
         {
             Monitor.Log($"Test.GameLoop_GameLaunched");
-            this.config = this.Helper.ReadConfig<ModConfig>();
+            this.config = ReadRPGGOConfig();
             this.session = ReadSession();
-            ConfigMenu();
+        }
+
+        private T ReadConfign<T>(string fileName)
+        {
+            var configPath = Path.Join(this.Helper.DirectoryPath, fileName);
+            Monitor.Log($"ReadConfig path: {configPath}");
+            try
+            {
+                var jsonContent = File.ReadAllText(configPath);
+                var ret = JsonConvert.DeserializeObject<T>(jsonContent);
+                return ret;
+            }
+            catch (Exception e)
+            {
+                Monitor.Log("Failed to read config: {configPath}");
+                Monitor.Log(e.ToString());
+            }
+            return default;
+        }
+
+        private void SaveConfig<T>(T configObj, string configName)
+        {
+            var configPath = Path.Join(this.Helper.DirectoryPath, configName);
+            Monitor.Log($"SaveConfig path: {configPath}");
+            try
+            {
+                var jsonContent = JsonConvert.SerializeObject(configObj);
+                File.WriteAllText(configPath, jsonContent);
+            }
+            catch (Exception e)
+            {
+                Monitor.Log("Failed to save config");
+                Monitor.Log(e.ToString());
+            }
         }
 
         public SessionConfig ReadSession()
         {
-            var sessionPath = Path.Join(this.Helper.DirectoryPath, "session.json");
-            Monitor.Log($"ReadSession path: {sessionPath}");
-            try
+            var ret = ReadConfign<SessionConfig>("session.json");
+            if (ret != null)
             {
-                var jsonContent = File.ReadAllText(sessionPath);
-                var ret = JsonConvert.DeserializeObject<SessionConfig>(jsonContent);
                 Monitor.Log($"ReadSession get sessionId from file: {ret.sessionId}");
                 return ret;
-            } catch (Exception e)
-            {
-                Monitor.Log("Failed to read session");
-                Monitor.Log(e.ToString());
             }
+            
             return new SessionConfig();
         }
 
         public void SaveSession(SessionConfig session)
         {
-            var sessionPath = Path.Join(this.Helper.DirectoryPath, "session.json");
-            Monitor.Log($"SaveSession path: {sessionPath}");
-            try
-            {
-                var jsonContent = JsonConvert.SerializeObject(session);
-                File.WriteAllText(sessionPath, jsonContent);
-            } catch (Exception e)
-            {
-                Monitor.Log("Failed to save session");
-                Monitor.Log(e.ToString());
-            }
+            SaveConfig<SessionConfig>(session, "session.json");
         }
 
-        private void ConfigMenu()
+        public RPGGOAPIGameConfig ReadRPGGOConfig()
+        {
+            var ret = ReadConfign<RPGGOAPIGameConfig>("rpggo_config.json");
+            if (ret != null)
+            {
+                Monitor.Log($"ReadRPGGOConfig get game id from file: {ret.gameId}");
+                return ret;
+            }
+
+            Monitor.Log($"You need rpggo_config.json to start the game. Download it from rpggo.ai", LogLevel.Error);
+            return new RPGGOAPIGameConfig();
+        }
+
+        public void SaveRPGGOConfig(RPGGOAPIGameConfig rpggoConfig)
+        {
+            SaveConfig<RPGGOAPIGameConfig>(rpggoConfig, "rpggo_config.json");
+        }
+
+        public void ResetConfigMenu()
         {
             var configMenu = this.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
             if (configMenu is null)
@@ -108,14 +146,19 @@ namespace stardewvalley_ai_mod
             configMenu.Register(
                 mod: this.ModManifest,
                 reset: () => {
-                    this.config = new ModConfig();
+                    this.config = new RPGGOAPIGameConfig();
                     this.session = new SessionConfig();
                 },
                 save: () =>
                 {
-                    this.Helper.WriteConfig(this.config);
+                    SaveRPGGOConfig(this.config);
                     SaveSession(this.session);
                 }
+            );
+
+            configMenu.AddSectionTitle(
+                mod: this.ModManifest,
+                text: () => "Game Settings:"
             );
 
             configMenu.AddTextOption(
@@ -127,24 +170,26 @@ namespace stardewvalley_ai_mod
             
             configMenu.AddTextOption(
                 mod: this.ModManifest,
-                name: () => "DM ID",
-                getValue: () => this.config.dmId,
-                setValue: value => this.config.dmId = value
-            );
-            
-            configMenu.AddTextOption(
-                mod: this.ModManifest,
                 name: () => "API Key",
                 getValue: () => this.config.apiKey,
                 setValue: value => this.config.apiKey = value
             );
 
-            configMenu.AddTextOption(
+            configMenu.AddSectionTitle(
                 mod: this.ModManifest,
-                name: () => "Session ID",
-                getValue: () => this.session.sessionId,
-                setValue: value => this.session.sessionId = value
+                text: () => "Characters:"
             );
+
+            foreach ( var character in this.config.gameCharacters)
+            {
+                configMenu.AddTextOption(
+                    mod: this.ModManifest,
+                    name: () => character,
+                    getValue: () => this.config.GetBindedStardewChar(character),
+                    setValue: value => this.config.SetBindedCharacter(character, value),
+                    allowedValues: this.config.stardewCharacters
+                );
+            }
         }
 
         private void GameLoop_DayEnding(object? sender, StardewModdingAPI.Events.DayEndingEventArgs e)
