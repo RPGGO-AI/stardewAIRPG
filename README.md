@@ -6,6 +6,8 @@ StardewRPG is to demostrate how to enable immersive, **AI-generated** RPG with S
 
 <img src=".img/a-soul-for-a-soul.gif" width="256">
 
+**Use RPGGO to - Give Game a Thriving Soul**
+
 ## 📖 Disclaimer
 StardewRPG is primarily a proof of concept. It is not recommended for any business purpose. The license of this repo is MIT, which means you can do anything, and you are responsible for your own behavior.
 
