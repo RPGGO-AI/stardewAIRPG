@@ -459,7 +459,8 @@ namespace stardewvalley_ai_mod
 
                     if (npcNameToId.ContainsKey(GetNPCName(npc).ToLower()))
                     {
-                        npc.doEmote(2);
+                        // fix previous issue. reset the IsMEmoting statues.
+                        npc.IsEmoting = false;
                     }
                 }
             }
