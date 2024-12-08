@@ -145,7 +145,9 @@ namespace v2api_client_csharp
             Action<string, GameOngoingResponse?> onBeforeChapterSwitch = null,
             Action<string, GameOngoingResponse?> onAfterChapterSwitch = null,
             Action<string> onGameEndingMessageReceived = null,
-            Action<string> onGameErrorReceived = null)
+            Action<string> onGameErrorReceived = null,
+            Action<string> onGameOutOfBalanceReceived = null
+            )
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -197,9 +199,19 @@ namespace v2api_client_csharp
                                 throw new Exception("json deserialize issue:" + completeMessage);
                             }
 
-                            if (sseMsg.Ret != 200 && sseMsg.Ret != 0)
+                            if (sseMsg.Ret != 200 && sseMsg.Ret != 0 && sseMsg.Ret != 10000602)
                             {
-                                Console.WriteLine($"Fail to chat with {characterId}: {sseMsg.Message}");
+                                message = $"Fail to chat with {characterId}: {sseMsg.Message}";
+                                Console.WriteLine(message);
+                                onGameErrorReceived?.Invoke(message);
+                                break;
+                            }
+
+                            if (sseMsg.Ret == 10000602)
+                            {
+                                message = $"You are run out of GG Coin. Visit https://rpggo.ai to get more GG coins to continue...";
+                                onGameOutOfBalanceReceived?.Invoke(message);
+                                break;
                             }
 
                             if (sseMsg.Data.Result != null)
