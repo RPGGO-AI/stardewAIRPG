@@ -46,6 +46,11 @@ namespace stardewvalley_ai_mod
             return Microsoft.Xna.Framework.Color.OrangeRed;
         }
 
+        public static Microsoft.Xna.Framework.Color getOutOfBalanceColor()
+        {
+            return Microsoft.Xna.Framework.Color.Tomato;
+        }
+
         public static string getFormatSecction(string words)
         {
             StringBuilder s = new StringBuilder();

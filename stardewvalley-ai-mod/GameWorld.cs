@@ -162,7 +162,7 @@ namespace stardewvalley_ai_mod
                 {
                     Log($"RPGGO.DoChat npcName:{npcName} chatInput:{chatInput} chrId:{chrId}");
 
-                    Game1.chatBox.addMessage($"{npc.displayName}[**{rpggoCharName}**]is thinking...", StrFormater.getNPCColor());
+                    Game1.chatBox.addMessage($"{npc.displayName} is thinking...", StrFormater.getNPCColor());
                     Game1.chatBox.addMessage($" ", StrFormater.getWhiteSpaceColor());
 
                     // npc.facePlayer(Game1.player);
@@ -188,7 +188,7 @@ namespace stardewvalley_ai_mod
         private async Task ShowNPCMessage(NPC npc, string responseMessage)
         {
             var rpggoCharName = this.config.GetBindedRPGGOChar(npc.displayName);
-            Game1.chatBox.addMessage($"{npc.displayName}[**{rpggoCharName}**]:{responseMessage}", StrFormater.getNPCChatColor());
+            Game1.chatBox.addMessage($"{npc.displayName}:{responseMessage}", StrFormater.getNPCChatColor());
             Game1.chatBox.addMessage(" ", StrFormater.getWhiteSpaceColor());
 
             int bubbleDuration = 3000;
@@ -300,7 +300,8 @@ namespace stardewvalley_ai_mod
                     var rpggoCharName = this.config.GetBindedRPGGOChar(GetNPCName(npc));
                     if (RPGGOUtils.IsRPGGOCharacterNameExist(rpggoCharName))
                     {
-                        npc.doEmote(2);
+                        // fix previous issue. reset the IsMEmoting statues.
+                        npc.IsEmoting = false;
                     }
                 }
             }
