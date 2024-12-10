@@ -1,6 +1,6 @@
 {
     "gameId": "GTVKGBKGR",
-    "apiKey": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.HGArkCHG5doj7i51gqABsYmcYUrIQtGT0iR2QQFY4Ec",
+    "apiKey": "",
     "stardewCharacters": [
         "",
         "Abigail",
@@ -87,3 +87,4 @@
         "Maru": "Maru"
     }
 }
+

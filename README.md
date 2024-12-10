@@ -6,13 +6,20 @@ StardewRPG is to demostrate how to enable immersive, **AI-generated** RPG with S
 
 <img src=".img/a-soul-for-a-soul.gif" width="256">
 
+**Use RPGGO to - Give Game a Thriving Soul**
+
 ## 📖 Disclaimer
 StardewRPG is primarily a proof of concept. It is not recommended for any business purpose. The license of this repo is MIT, which means you can do anything, and you are responsible for your own behavior.
 
 Have your fun!
 
+## 💖 My Motivation
+[Why I build this](https://github.com/codingtmd/stardewAIRPG/wiki)
+
 
 ## 📰 Progress
+
+- Nov 30, 2024: add wiki pages [wiki](https://github.com/codingtmd/stardewAIRPG/wiki)
 
 - Nov 19, 2024: release the [preview version v1.0.6](https://github.com/codingtmd/stardewAIRPG/releases/tag/v1.0.6). Ready for public testing and upload to nexusmods(https://www.nexusmods.com/stardewvalley/mods/29450).
   
@@ -22,9 +29,11 @@ Have your fun!
 
 - Oct 20, 2024: the repo created and start the project! We believe this will be very fun.
 
+
 ## ❓ Prerequisites
 For general prerequisites for playing with Stardew Valley mods, see the [Player Guide](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started) on the Stardew Valley Wiki.
 
+For Q&A of this mod, please see my wiki [Mod Guide](https://github.com/codingtmd/stardewAIRPG/wiki)
 
 ## 📽️ Demo
 [![Demo Video](.img/Screenshot_small.png)](https://www.youtube.com/watch?v=NrFu7ospMIs)

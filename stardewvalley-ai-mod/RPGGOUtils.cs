@@ -84,7 +84,13 @@ namespace stardewvalley_ai_mod
 
         private static void onGameErrorReceived(string msg)
         {
-            Game1.chatBox.addMessage("system error: " + msg, StrFormater.getSystemErrorColor());
+            Game1.chatBox.addMessage("server side error: " + msg, StrFormater.getSystemErrorColor());
+            Game1.chatBox.addMessage("", StrFormater.getWhiteSpaceColor());
+        }
+
+        private static void onGameOutOfCoinsReceived(string msg)
+        {
+            Game1.chatBox.addMessage("Out of balance: " + msg, StrFormater.getOutOfBalanceColor());
             Game1.chatBox.addMessage("", StrFormater.getWhiteSpaceColor());
         }
 
@@ -150,7 +156,7 @@ namespace stardewvalley_ai_mod
             {
                 _monitor?.Log($"RPGGO.SingleChatToNPC response: {msg}");
                 source.TrySetResult(msg);
-            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding, onGameErrorReceived);
+            }, (_) => { }, BeforeChapterSwitch, AfterChapterSwitch, OnGameEnding, onGameErrorReceived, onGameOutOfCoinsReceived);
             return await source.Task;
         }
     }
